@@ -1,12 +1,12 @@
 # Terraform AWS Practice Lab
 
-AWS infrastructure practice environment using **Terragrunt 1.0 Stacks** pattern with reusable catalog units.
+AWS infrastructure practice environment using the **Terragrunt 1.0 Stacks** pattern with reusable catalog units, running on **OpenTofu**.
 
 Built for SAA Professional certification prep — covers Organizations/IAM, networking, EKS, serverless, DR/multi-region, and more.
 
 ## Prerequisites
 
-- [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.0
+- [OpenTofu](https://opentofu.org/docs/intro/install/) >= 1.6
 - [Terragrunt](https://terragrunt.gruntwork.io/docs/getting-started/install/) >= 1.0
 - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) v2
 - An AWS account with credentials configured (`aws configure`)
@@ -39,7 +39,7 @@ terragrunt stack run apply --all
 ├── .envrc.example              # Template for local environment variables
 │
 ├── catalog/                    # Reusable infrastructure catalog
-│   ├── modules/                # Custom Terraform modules
+│   ├── modules/                # Custom OpenTofu modules
 │   │   ├── kms/                # KMS key with rotation + key policy
 │   │   └── budget/             # AWS Budget + SNS notifications
 │   └── units/                  # Terragrunt unit templates

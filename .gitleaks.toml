@@ -1,0 +1,25 @@
+[extend]
+useDefault = true
+
+[[rules]]
+id = "aws-account-id"
+description = "Hardcoded AWS account ID"
+regex = '''\b\d{12}\b'''
+# Only flag inside tf/hcl/env files — avoids false positives in docs
+paths = [
+  '''.*\.(tf|hcl|env|envrc|tfvars)$'''
+]
+[rules.allowlist]
+# account.hcl reads from env var, not hardcoded — allow the get_env() call
+regexes = ['''get_env\(''']
+
+[[rules]]
+id = "aws-arn-with-account"
+description = "ARN containing a real account ID"
+regex = '''arn:aws:[a-z0-9\-]+:[a-z0-9\-]*:\d{12}:'''
+paths = [
+  '''.*\.(tf|hcl|tfvars)$'''
+]
+[rules.allowlist]
+# managed policy ARNs use aws (not account ID) — ignore those
+regexes = ['''arn:aws:iam::aws:policy''']

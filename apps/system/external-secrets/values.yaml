@@ -1,0 +1,7 @@
+serviceAccount:
+  name: external-secrets
+  annotations:
+    eks.amazonaws.com/role-arn: ""  # set via IRSA after cluster is up
+
+# Installs CRDs automatically
+installCRDs: true

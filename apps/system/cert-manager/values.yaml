@@ -1,0 +1,10 @@
+installCRDs: true
+
+serviceAccount:
+  name: cert-manager
+  annotations:
+    eks.amazonaws.com/role-arn: ""  # set via IRSA for Route53 DNS01 solver
+
+# Needed for Route53 DNS01 ACME challenge
+extraArgs:
+  - --issuer-ambient-credentials

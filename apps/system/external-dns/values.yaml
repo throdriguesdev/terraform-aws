@@ -1,0 +1,18 @@
+provider: aws
+aws:
+  region: us-east-1
+  zoneType: public
+
+# Filters to only manage records in the lab zone
+domainFilters:
+  - lab.trdevops.com.br
+
+# Only create records — never delete (safer for a lab)
+policy: upsert-only
+
+txtOwnerId: practice-dev
+
+serviceAccount:
+  name: external-dns
+  annotations:
+    eks.amazonaws.com/role-arn: ""  # set via IRSA after cluster is up

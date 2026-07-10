@@ -15,7 +15,7 @@ unit "vpc" {
     private_subnets  = ["10.0.48.0/20", "10.0.64.0/20", "10.0.80.0/20"]
     database_subnets = ["10.0.96.0/20", "10.0.112.0/20", "10.0.128.0/20"]
 
-    enable_nat = false
+    enable_nat = true
     single_nat = true
 
     public_subnet_tags = {

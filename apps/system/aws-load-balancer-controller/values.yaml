@@ -1,0 +1,10 @@
+clusterName: practice-dev
+region: us-east-1
+vpcId: ""  # injected at deploy time
+
+serviceAccount:
+  name: aws-load-balancer-controller
+  annotations:
+    eks.amazonaws.com/role-arn: ""  # set via IRSA after cluster is up
+
+replicaCount: 2

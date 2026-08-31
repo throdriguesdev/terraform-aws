@@ -1,101 +1,89 @@
-# AWS Practice Lab
+# terraform-aws
 
-A hands-on playground for building **real projects on AWS** — using the **Terragrunt 1.0 Stacks** pattern on **OpenTofu**, plus the cloud-native toolchain around them (EKS, ArgoCD, external-dns, cert-manager, external-secrets, RDS, Route53).
+A reusable catalog of **AWS infrastructure modules** built with Terragrunt 1.0 Stacks on OpenTofu.
 
-The point is to practice by *building and operating* actual infrastructure: spin a piece up, get it working end-to-end, tear it down to save credits, repeat. Certification prep (including AWS SAA-Professional) is one use of the lab — not the reason it exists.
+Designed to be consumed by external deployment repos (like [devopsdays-fsa](https://github.com/throdriguesdev/devopsdays-fsa)) via versioned git references, and also usable standalone as a practice lab.
 
-## Prerequisites
+## What's in the catalog
+
+| Module | Description |
+|--------|-------------|
+| `vpc` | VPC, public/private subnets, NAT gateway |
+| `kms` | KMS key with rotation + cluster encryption policy |
+| `budget` | AWS Budget with SNS alert |
+| `route53-zone` | Public hosted zone |
+| `rds-postgres` | RDS PostgreSQL with subnet group |
+| `eks` | EKS cluster, OIDC/IRSA, managed Spot node group, EBS CSI |
+| `eks-addons` | LBC, cert-manager (Route53 DNS01), external-dns, external-secrets — all IRSA-wired |
+| `argocd` | ArgoCD via Helm, ALB ingress + TLS via cert-manager |
+| `ec2-game-server` | Opinionated EC2 game server (Project Zomboid / similar) |
+
+## Consuming modules from another repo
+
+Reference any module by git URL + tag:
+
+```hcl
+terraform {
+  source = "git::https://github.com/throdriguesdev/terraform-aws.git//catalog/modules/eks?ref=v1.0.0"
+}
+```
+
+See [devopsdays-fsa](https://github.com/throdriguesdev/devopsdays-fsa) for a full working example that deploys an observability-ready EKS cluster using this catalog.
+
+## Using as a standalone lab
+
+### Prerequisites
 
 - [OpenTofu](https://opentofu.org/docs/intro/install/) >= 1.6
 - [Terragrunt](https://terragrunt.gruntwork.io/docs/getting-started/install/) >= 1.0
-- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) v2, plus `kubectl` and `helm` for the EKS stacks
-- An AWS account with credentials configured, and (optionally) [direnv](https://direnv.net/)
+- AWS CLI v2 + `kubectl` + `helm`
+- An AWS account with credentials configured; optionally [direnv](https://direnv.net/)
 
-## Quick start
+### Quick start
 
 ```bash
-# 1. Configure your environment (values stay local — .envrc is gitignored)
-cp .envrc.example .envrc      # set AWS profile, account ID, notification email
+cp .envrc.example .envrc      # set TF_VAR_aws_profile, TF_VAR_account_id
 direnv allow                  # or: source .envrc
 
-# 2. Bring the whole lab up (foundation → networking → dns → compute → data + kubeconfig)
-./scripts/lab-up.sh
-
-# 3. Tear the cost-bearing pieces down when you're done
-./scripts/lab-down.sh -y      # keeps dns + foundation (~$1.50/mo idle)
+./scripts/lab-up.sh           # foundation → networking → dns → compute
+./scripts/lab-down.sh -y      # tear down cost-bearing pieces (keeps dns + foundation)
 ```
 
-## Structure
+### Stack structure
 
 ```
-.
-├── root.hcl                    # Terragrunt root (state backend, provider, catalog)
-├── account.hcl                 # AWS account ID (sourced from env var — not committed)
-├── .envrc.example              # Template for local environment variables
-│
-├── catalog/                    # Reusable infrastructure catalog
-│   ├── modules/                # Custom OpenTofu modules:
-│   │   │                       #   kms, budget, vpc, eks, eks-addons,
-│   │   └── ...                 #   rds-postgres, route53-zone
-│   └── units/                  # Terragrunt unit templates (one wrapper per module)
-│
-├── live/dev/us-east-1/         # Environment deployments (stacks)
-│   ├── foundation/             # KMS + Budget          — kept when idle (~$1/mo)
-│   ├── networking/             # VPC + NAT gateway
-│   ├── dns/                    # Route53 zone          — kept when idle (~$0.50/mo)
-│   ├── compute/                # EKS + Spot nodes + system addons (IRSA)
-│   └── data/                   # RDS Postgres
-│
-├── apps/                       # Kubernetes workloads + platform config
-│   ├── system/                 # addon config: LBC, cert-manager, external-dns, external-secrets
-│   └── services/               # demo workloads (echo)
-├── gitops/                     # ArgoCD app-of-apps (in progress)
-├── docs/                       # service deep-dives + runbooks
-└── scripts/
-    ├── lab-up.sh               # apply all stacks + update kubeconfig
-    ├── lab-down.sh             # release ALBs, destroy cost-bearing stacks, keep dns+foundation
-    ├── eks-connect.sh          # add the cluster kube-context
-    └── cost-check.sh           # Cost Explorer vs budget
+live/dev/us-east-1/
+  foundation/     # KMS + Budget          (~$1/mo idle)
+  networking/     # VPC + NAT gateway
+  dns/            # Route53 zone          (~$0.50/mo idle)
+  compute/        # EKS + Spot nodes + addons + ArgoCD
+  data/           # RDS Postgres
 ```
-
-## How it works
-
-This repo uses **Terragrunt 1.0 Explicit Stacks**:
-
-1. **Catalog** (`catalog/`) — reusable modules + unit templates
-2. **Live** (`live/`) — `terragrunt.stack.hcl` files compose units with environment-specific values
-3. **Stacks** generate the units, resolve cross-stack dependencies, and apply together
 
 ```bash
-terragrunt stack run plan       # plan every unit in the current stack
-terragrunt stack run apply      # apply
-terragrunt stack run destroy    # destroy
-terragrunt stack clean          # remove generated units
+# within any stack directory:
+terragrunt stack run plan
+terragrunt stack run apply
+terragrunt stack run destroy
 ```
-
-Most of the time you'll just use `scripts/lab-up.sh` / `lab-down.sh`, which run these in the right order and handle the parts Terraform can't (releasing the LB-Controller-created ALB before destroy).
 
 ## What's built
 
 | Area | Components | Status |
 |------|-----------|--------|
-| Foundation | KMS (rotation + policy), Budget + SNS | Done |
+| Foundation | KMS, Budget + SNS | Done |
 | Networking | VPC, subnets, NAT gateway | Done |
-| DNS / TLS | Route53 zone, cert-manager (Route53 DNS01), external-dns | Done |
-| Compute | EKS, managed Spot nodes, EBS CSI, OIDC/IRSA | Done |
+| DNS / TLS | Route53 zone, cert-manager (DNS01), external-dns | Done |
+| Compute | EKS 1.32, managed Spot nodes, EBS CSI, OIDC/IRSA | Done |
 | Ingress | AWS Load Balancer Controller (ALB) | Done |
 | Secrets | external-secrets (SSM / Secrets Manager) | Done |
+| GitOps | ArgoCD (Helm, ALB ingress, TLS) | Done |
 | Data | RDS Postgres | Done |
-| GitOps | ArgoCD app-of-apps | In progress |
-| Serverless | Lambda, API Gateway, SQS/SNS, EventBridge | Planned |
-| Observability | CloudWatch, metrics/logs pipelines | Planned |
-| DR / Multi-region | cross-region replication, failover | Planned |
+| Observability | Grafana + LGTM stack (via devopsdays-fsa GitOps) | External |
 
-## Cost & lifecycle
+## Cost
 
-Budget: **$100 AWS credits** — so the lab is designed to be ephemeral.
+- **Idle** (dns + foundation only): **~$1.50/mo**
+- **Full lab** (EKS control plane + NAT + Spot nodes + ALB): **~$0.20/hr**
 
-- **Idle** (only `dns` + `foundation` kept): **~$1.50/mo**
-- **Full lab up** (EKS control plane, NAT gateway, Spot nodes, RDS, ALB): **~$0.20/hr** — tear it down when you're not using it
-- `./scripts/lab-down.sh` drops to idle; `./scripts/lab-up.sh` resumes **without re-delegating DNS** (the Route53 zone is kept, so no waiting on NS propagation in your registrar)
-- `./scripts/cost-check.sh` monitors spend against the budget
+`./scripts/lab-down.sh` drops to idle cost without losing the Route53 zone delegation.

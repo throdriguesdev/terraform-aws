@@ -10,6 +10,10 @@ resource "helm_release" "argocd" {
 
   values = [
     yamlencode({
+      global = {
+        domain = var.ingress_host
+      }
+
       configs = {
         params = {
           # ArgoCD serves HTTP internally — ALB terminates TLS
@@ -22,15 +26,14 @@ resource "helm_release" "argocd" {
           enabled          = true
           ingressClassName = "alb"
           annotations = {
-            "alb.ingress.kubernetes.io/scheme"              = "internet-facing"
-            "alb.ingress.kubernetes.io/target-type"         = "ip"
-            "alb.ingress.kubernetes.io/listen-ports"        = "[{\"HTTPS\":443},{\"HTTP\":80}]"
-            "alb.ingress.kubernetes.io/ssl-redirect"        = "443"
-            "cert-manager.io/cluster-issuer"                = "letsencrypt-prod"
-            "external-dns.alpha.kubernetes.io/hostname"     = var.ingress_host
+            "alb.ingress.kubernetes.io/scheme"          = "internet-facing"
+            "alb.ingress.kubernetes.io/target-type"     = "ip"
+            "alb.ingress.kubernetes.io/listen-ports"    = "[{\"HTTPS\":443},{\"HTTP\":80}]"
+            "alb.ingress.kubernetes.io/ssl-redirect"    = "443"
+            "cert-manager.io/cluster-issuer"            = "letsencrypt-prod"
+            "external-dns.alpha.kubernetes.io/hostname" = var.ingress_host
           }
-          hostname = var.ingress_host
-          tls      = true
+          tls = true
         }
       }
     })

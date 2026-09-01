@@ -29,11 +29,8 @@ resource "helm_release" "argocd" {
             "cert-manager.io/cluster-issuer"                = "letsencrypt-prod"
             "external-dns.alpha.kubernetes.io/hostname"     = var.ingress_host
           }
-          hosts = [var.ingress_host]
-          tls = [{
-            secretName = "argocd-server-tls"
-            hosts      = [var.ingress_host]
-          }]
+          hostname = var.ingress_host
+          tls      = true
         }
       }
     })

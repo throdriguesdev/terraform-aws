@@ -119,7 +119,7 @@ The `local` route (VPC CIDR) is automatic and cannot be removed — all subnets 
 | Cost | Free (data transfer only) | $0.05/hr + $0.02/GB |
 | Scale | Up to 125 peering connections | Up to 5,000 attachments |
 
-**SAA-Pro rule of thumb:** <10 VPCs → peering is simpler and free. >10 VPCs or need transitive routing → Transit Gateway.
+**Decision guide:** <10 VPCs → peering is simpler and free. >10 VPCs or need transitive routing → Transit Gateway.
 
 ## VPC Endpoints
 
@@ -170,15 +170,15 @@ We pre-tagged public and private subnets for future EKS deployment.
 
 Our current cost: **$0/month** (no NAT, no VPC endpoints, no flow logs).
 
-## SAA-Pro Exam Tips
+## Key Concepts
 
-- Know the 3-tier subnet pattern (public/private/isolated) and which resources go where
-- NAT Gateway is single-AZ — for HA, deploy one per AZ (exam loves this question)
-- VPC peering is NOT transitive: A↔B and B↔C does NOT mean A↔C. Need Transit Gateway for that
-- Gateway endpoints (S3, DynamoDB) are free and route-table-based. Interface endpoints use ENIs and cost money
-- VPC CIDR cannot overlap with peered VPCs — plan CIDR allocation upfront
+- 3-tier subnet pattern: public (ALBs, NAT), private (workloads), isolated (databases with no outbound)
+- NAT Gateway is single-AZ — for HA, deploy one per AZ (3x cost)
+- VPC peering is NOT transitive: A↔B and B↔C does NOT mean A↔C — Transit Gateway handles that
+- Gateway endpoints (S3, DynamoDB) are free and route-table-based; Interface endpoints use ENIs and cost $0.01/hr per AZ
+- VPC CIDRs cannot overlap with peered VPCs — plan CIDR allocation before peering
 - Secondary CIDRs can be added to a VPC (up to 5 total) — useful when running out of IPs
-- `enableDnsHostnames` must be true for RDS, ELB, and VPC endpoints to work with DNS names
-- Private subnets need NAT for outbound internet, but AWS services can be reached via VPC endpoints instead (cheaper)
+- `enableDnsHostnames` must be true for RDS, ELB, and VPC endpoints to resolve DNS names
+- Private subnets can reach AWS services via VPC endpoints instead of NAT — significantly cheaper at scale
 - CIDR /28 is the minimum subnet size, /16 is the maximum VPC size
-- IPv6: VPC supports dual-stack. Egress-only IGW = IPv6 equivalent of NAT (outbound only)
+- IPv6: VPC supports dual-stack; Egress-only IGW is the IPv6 equivalent of NAT (outbound only)

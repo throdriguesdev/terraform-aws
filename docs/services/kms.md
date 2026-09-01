@@ -21,7 +21,7 @@ Region:  us-east-1
 **Why we created it:**
 - Single CMK for encrypting resources across all labs (S3, EBS volumes, EKS secrets, RDS, CloudWatch Logs)
 - Centralizes key management — one key policy to audit
-- Enables encryption at rest for everything, which is both a security best practice and an SAA-Pro exam requirement to understand
+- Enables encryption at rest for everything — single key to audit across all services
 
 ## Key Types
 
@@ -32,7 +32,7 @@ Region:  us-east-1
 | **Asymmetric ECC** | ECC NIST P-256/384/521 | Digital signatures | JWT signing, document signing |
 | **HMAC** | HMAC-SHA-256/384/512 | Generate and verify MACs | API request authentication |
 
-**SAA-Pro focus:** Almost always symmetric. Know when to pick asymmetric (external party needs the public key, can't call KMS).
+**When to pick asymmetric:** only when an external party needs the public key and can't call KMS directly (e.g., verifying signatures outside AWS).
 
 ## Key Categories
 
@@ -68,7 +68,7 @@ To decrypt:
 
 AWS services do this automatically (S3, EBS, RDS all use envelope encryption under the hood).
 
-### SSE Types for S3 (common SAA-Pro question)
+### SSE Types for S3
 
 | Type | Key Managed By | Header |
 |------|---------------|--------|
@@ -125,13 +125,13 @@ KMS supports multi-region keys for disaster recovery:
 
 Our projected cost: **~$1/month** (1 CMK + minimal API calls).
 
-## SAA-Pro Exam Tips
+## Key Concepts
 
-- Know the difference between SSE-S3, SSE-KMS, SSE-C, and DSSE-KMS
-- Understand key policy + IAM policy interaction — key policy is king
-- Know when to use CMK vs AWS managed key (CMK when you need cross-account access, custom key policy, or rotation control)
-- Envelope encryption is the standard pattern — KMS encrypts the data key, not the data
-- Multi-region keys for DR — same key material replicated, not the same ARN
-- KMS has a request quota (shared per account per region): 5,500-30,000 req/sec depending on key type. If you hit it, use data key caching or S3 bucket keys
+- SSE-S3, SSE-KMS, SSE-C, and DSSE-KMS differ by who manages the key — SSE-KMS is the right choice when you need audit trails or cross-account access
+- Key policy + IAM policy interaction: key policy is evaluated first; IAM policies alone can't override it
+- Use CMK over AWS managed key when you need cross-account access, a custom key policy, or rotation control
+- Envelope encryption is the standard pattern — KMS encrypts the data key, not the data itself
+- Multi-region keys replicate the same key material to other regions; useful for active-active or DR setups
+- KMS has a per-account request quota (5,500–30,000 req/sec by region/key type) — use data key caching or S3 bucket keys if you approach it
 - `kms:ViaService` condition key restricts CMK usage to specific AWS services
 - `aws:kms:dsse` (dual-layer SSE) is required for certain compliance frameworks

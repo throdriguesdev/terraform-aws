@@ -48,7 +48,7 @@ Budgets can trigger automated responses:
 | Apply SCP | Organization-level restriction |
 | Stop EC2 instances | Target specific instances by tag |
 
-**SAA-Pro scenario:** "How to automatically prevent overspend?" → Budget action that applies a deny SCP when 90% threshold is hit.
+**Example:** to automatically prevent overspend, configure a budget action that applies a deny SCP when a threshold is hit.
 
 ## Cost
 
@@ -58,10 +58,10 @@ Budgets can trigger automated responses:
 
 We use 1 budget → **$0/month**.
 
-## SAA-Pro Exam Tips
+## Key Concepts
 
-- Budgets vs Cost Explorer: Budgets is for alerts/actions, Cost Explorer is for analysis/visualization
-- Budgets can apply SCPs via budget actions — powerful for org-level cost governance
-- Forecasted alerts use ML to predict end-of-period spend
-- Cost Anomaly Detection is a separate service for unexpected spikes (complements Budgets)
-- Budgets updates ~3x/day (not real-time) — there can be a delay of up to 24 hours
+- Budgets vs Cost Explorer: Budgets is for alerts and automated actions; Cost Explorer is for analysis and visualization
+- Budget actions can apply SCPs at the org level — useful for hard enforcement in multi-account setups
+- Forecasted alerts use ML to predict end-of-period spend before you actually hit the threshold
+- Cost Anomaly Detection is a separate service for detecting unexpected spikes (complements Budgets)
+- Budgets data refreshes ~3x/day — there can be up to a 24-hour delay before an alert fires

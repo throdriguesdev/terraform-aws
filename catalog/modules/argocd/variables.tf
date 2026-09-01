@@ -19,3 +19,9 @@ variable "gitops_repo_url" {
   type        = string
   default     = ""
 }
+
+variable "acm_certificate_arn" {
+  description = "ARN of the ACM certificate to use for ALB HTTPS"
+  type        = string
+  default     = ""
+}

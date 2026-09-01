@@ -16,7 +16,6 @@ Designed to be consumed by external deployment repos (like [devopsdays-fsa](http
 | `eks` | EKS cluster, OIDC/IRSA, managed Spot node group, EBS CSI |
 | `eks-addons` | LBC, cert-manager (Route53 DNS01), external-dns, external-secrets — all IRSA-wired |
 | `argocd` | ArgoCD via Helm, ALB ingress + TLS via cert-manager |
-| `ec2-game-server` | Opinionated EC2 game server (Project Zomboid / similar) |
 
 ## Consuming modules from another repo
 

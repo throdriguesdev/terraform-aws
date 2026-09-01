@@ -56,9 +56,26 @@ variable "enabled_cluster_log_types" {
 }
 
 variable "public_access_cidrs" {
-  description = "CIDRs allowed to reach the public API endpoint — restrict to your IP for hardening"
+  description = "CIDRs allowed to reach the public API endpoint — empty list means no public access restriction is set by default; restrict to specific IPs in production"
   type        = list(string)
-  default     = ["0.0.0.0/0"]
+  default     = []
+}
+
+variable "ami_type" {
+  description = "AMI type for the managed node group (e.g. AL2023_x86_64_STANDARD, AL2023_ARM_64_STANDARD, BOTTLEROCKET_x86_64)"
+  type        = string
+  default     = "AL2023_x86_64_STANDARD"
+}
+
+variable "node_max_unavailable" {
+  description = "Maximum number of nodes unavailable during a node group update"
+  type        = number
+  default     = 1
+}
+
+variable "region" {
+  description = "AWS region — used in helper outputs"
+  type        = string
 }
 
 variable "authentication_mode" {

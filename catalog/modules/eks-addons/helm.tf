@@ -9,7 +9,7 @@ resource "helm_release" "lbc" {
   repository       = "https://aws.github.io/eks-charts"
   chart            = "aws-load-balancer-controller"
   version          = var.lbc_chart_version
-  namespace        = "kube-system"
+  namespace        = var.lbc_namespace
   create_namespace = false
 
   set {
@@ -26,7 +26,7 @@ resource "helm_release" "lbc" {
   }
   set {
     name  = "serviceAccount.name"
-    value = "aws-load-balancer-controller"
+    value = var.lbc_sa_name
   }
   set {
     name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
@@ -54,7 +54,7 @@ resource "helm_release" "cert_manager" {
   repository       = "https://charts.jetstack.io"
   chart            = "cert-manager"
   version          = var.cert_manager_chart_version
-  namespace        = "cert-manager"
+  namespace        = var.cert_manager_namespace
   create_namespace = true
 
   set {
@@ -63,7 +63,7 @@ resource "helm_release" "cert_manager" {
   }
   set {
     name  = "serviceAccount.name"
-    value = "cert-manager"
+    value = var.cert_manager_sa_name
   }
   set {
     name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
@@ -88,7 +88,7 @@ resource "helm_release" "external_dns" {
   repository       = "https://kubernetes-sigs.github.io/external-dns/"
   chart            = "external-dns"
   version          = var.external_dns_chart_version
-  namespace        = "external-dns"
+  namespace        = var.external_dns_namespace
   create_namespace = true
 
   set {
@@ -101,7 +101,7 @@ resource "helm_release" "external_dns" {
   }
   set {
     name  = "aws.zoneType"
-    value = "public"
+    value = var.external_dns_zone_type
   }
   set {
     name  = "domainFilters[0]"
@@ -117,7 +117,7 @@ resource "helm_release" "external_dns" {
   }
   set {
     name  = "serviceAccount.name"
-    value = "external-dns"
+    value = var.external_dns_sa_name
   }
   set {
     name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
@@ -138,7 +138,7 @@ resource "helm_release" "external_secrets" {
   repository       = "https://charts.external-secrets.io"
   chart            = "external-secrets"
   version          = var.external_secrets_chart_version
-  namespace        = "external-secrets"
+  namespace        = var.external_secrets_namespace
   create_namespace = true
 
   set {
@@ -147,7 +147,7 @@ resource "helm_release" "external_secrets" {
   }
   set {
     name  = "serviceAccount.name"
-    value = "external-secrets"
+    value = var.external_secrets_sa_name
   }
   set {
     name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"

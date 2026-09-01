@@ -9,8 +9,8 @@ resource "aws_security_group" "this" {
 
   ingress {
     description = "PostgreSQL"
-    from_port   = 5432
-    to_port     = 5432
+    from_port   = var.db_port
+    to_port     = var.db_port
     protocol    = "tcp"
     cidr_blocks = var.allowed_cidr_blocks
   }
@@ -41,12 +41,12 @@ resource "aws_db_parameter_group" "this" {
 
   parameter {
     name  = "log_connections"
-    value = "1"
+    value = var.enable_log_connections ? "1" : "0"
   }
 
   parameter {
     name  = "log_disconnections"
-    value = "1"
+    value = var.enable_log_disconnections ? "1" : "0"
   }
 }
 
@@ -69,7 +69,7 @@ resource "aws_db_instance" "this" {
 
   allocated_storage     = var.allocated_storage
   max_allocated_storage = var.max_allocated_storage
-  storage_type          = "gp3"
+  storage_type          = var.storage_type
   storage_encrypted     = true
   kms_key_id            = var.kms_key_arn
 
@@ -78,7 +78,7 @@ resource "aws_db_instance" "this" {
   parameter_group_name   = aws_db_parameter_group.this.name
 
   multi_az               = var.multi_az
-  publicly_accessible    = false
+  publicly_accessible    = var.publicly_accessible
   deletion_protection    = var.deletion_protection
   skip_final_snapshot    = var.skip_final_snapshot
   backup_retention_period = var.backup_retention_period

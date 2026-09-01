@@ -1,5 +1,9 @@
+locals {
+  name_suffix = var.environment != "" ? "-${var.environment}" : ""
+}
+
 resource "aws_sns_topic" "budget" {
-  name = "budget-alerts"
+  name = "budget-alerts${local.name_suffix}"
 }
 
 resource "aws_sns_topic_subscription" "email" {
@@ -25,7 +29,7 @@ resource "aws_sns_topic_policy" "budget" {
 }
 
 resource "aws_budgets_budget" "monthly" {
-  name         = "monthly-account-budget"
+  name         = "monthly-account-budget${local.name_suffix}"
   budget_type  = "COST"
   limit_amount = var.limit_amount
   limit_unit   = "USD"

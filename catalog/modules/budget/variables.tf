@@ -13,3 +13,9 @@ variable "thresholds" {
   type        = list(number)
   default     = [25, 50, 75, 100]
 }
+
+variable "environment" {
+  description = "Environment name appended to resource names to avoid conflicts across deployments (e.g. dev, staging, prod)"
+  type        = string
+  default     = ""
+}

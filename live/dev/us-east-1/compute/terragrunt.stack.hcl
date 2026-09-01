@@ -2,19 +2,6 @@ locals {
   units_path = "${get_repo_root()}/catalog/units"
 }
 
-unit "pz-server" {
-  source = "${local.units_path}/ec2-game-server"
-  path   = "pz-server"
-  values = {
-    name           = "pz-server"
-    instance_type  = "c6a.xlarge"
-    key_name       = "th"
-    volume_size    = 30
-    server_name    = "pzserver"
-    admin_password = get_env("TF_VAR_pz_admin_password")
-  }
-}
-
 unit "eks" {
   source = "${local.units_path}/eks"
   path   = "eks"

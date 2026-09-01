@@ -1,5 +1,3 @@
-data "aws_region" "current" {}
-
 ################################################################################
 # Cluster IAM Role
 ################################################################################
@@ -134,7 +132,7 @@ resource "aws_eks_node_group" "this" {
   subnet_ids      = var.subnet_ids
   instance_types  = var.instance_types
   capacity_type   = var.capacity_type
-  ami_type        = "AL2023_x86_64_STANDARD"
+  ami_type        = var.ami_type
 
   scaling_config {
     min_size     = var.node_min_size
@@ -143,7 +141,7 @@ resource "aws_eks_node_group" "this" {
   }
 
   update_config {
-    max_unavailable = 1
+    max_unavailable = var.node_max_unavailable
   }
 
   depends_on = [

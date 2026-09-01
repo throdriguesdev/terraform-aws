@@ -23,7 +23,7 @@ resource "aws_iam_role" "lbc" {
       Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
-          "${local.oidc_issuer}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
+          "${local.oidc_issuer}:sub" = "system:serviceaccount:${var.lbc_namespace}:${var.lbc_sa_name}"
           "${local.oidc_issuer}:aud" = "sts.amazonaws.com"
         }
       }
@@ -54,7 +54,7 @@ resource "aws_iam_role" "cert_manager" {
       Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
-          "${local.oidc_issuer}:sub" = "system:serviceaccount:cert-manager:cert-manager"
+          "${local.oidc_issuer}:sub" = "system:serviceaccount:${var.cert_manager_namespace}:${var.cert_manager_sa_name}"
           "${local.oidc_issuer}:aud" = "sts.amazonaws.com"
         }
       }
@@ -105,7 +105,7 @@ resource "aws_iam_role" "external_dns" {
       Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
-          "${local.oidc_issuer}:sub" = "system:serviceaccount:external-dns:external-dns"
+          "${local.oidc_issuer}:sub" = "system:serviceaccount:${var.external_dns_namespace}:${var.external_dns_sa_name}"
           "${local.oidc_issuer}:aud" = "sts.amazonaws.com"
         }
       }
@@ -151,7 +151,7 @@ resource "aws_iam_role" "external_secrets" {
       Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
-          "${local.oidc_issuer}:sub" = "system:serviceaccount:external-secrets:external-secrets"
+          "${local.oidc_issuer}:sub" = "system:serviceaccount:${var.external_secrets_namespace}:${var.external_secrets_sa_name}"
           "${local.oidc_issuer}:aud" = "sts.amazonaws.com"
         }
       }
@@ -170,17 +170,17 @@ resource "aws_iam_role_policy" "external_secrets" {
       {
         Effect   = "Allow"
         Action   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
-        Resource = "*"
+        Resource = var.external_secrets_secret_arns
       },
       {
         Effect   = "Allow"
         Action   = ["ssm:GetParameter", "ssm:GetParameters", "ssm:GetParametersByPath"]
-        Resource = "*"
+        Resource = var.external_secrets_parameter_arns
       },
       {
         Effect   = "Allow"
         Action   = ["kms:Decrypt"]
-        Resource = "*"
+        Resource = var.external_secrets_kms_key_arns
       },
     ]
   })

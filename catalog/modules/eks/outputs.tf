@@ -40,6 +40,6 @@ output "ebs_csi_role_arn" {
 }
 
 output "kubeconfig_command" {
-  description = "Run this after apply to add the context to ~/dotfiles/kube-config"
-  value       = "aws eks update-kubeconfig --kubeconfig $HOME/dotfiles/kube-config --name ${aws_eks_cluster.this.name} --region ${data.aws_region.current.name} --profile $TF_VAR_aws_profile --alias ${aws_eks_cluster.this.name}"
+  description = "Run this after apply to update your local kubeconfig"
+  value       = "aws eks update-kubeconfig --name ${aws_eks_cluster.this.name} --region ${var.region}"
 }

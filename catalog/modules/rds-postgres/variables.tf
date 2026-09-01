@@ -89,3 +89,33 @@ variable "performance_insights_enabled" {
   type        = bool
   default     = true
 }
+
+variable "db_port" {
+  description = "Database port exposed in the security group"
+  type        = number
+  default     = 5432
+}
+
+variable "storage_type" {
+  description = "RDS storage type (gp2, gp3, io1, io2)"
+  type        = string
+  default     = "gp3"
+}
+
+variable "publicly_accessible" {
+  description = "Make the instance publicly accessible — should be false except for specific testing scenarios"
+  type        = bool
+  default     = false
+}
+
+variable "enable_log_connections" {
+  description = "Log each successful connection to the database"
+  type        = bool
+  default     = true
+}
+
+variable "enable_log_disconnections" {
+  description = "Log each session termination"
+  type        = bool
+  default     = true
+}

@@ -1,88 +1,126 @@
 # terraform-aws
 
-A reusable catalog of **AWS infrastructure modules** built with Terragrunt 1.0 Stacks on OpenTofu.
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![OpenTofu](https://img.shields.io/badge/OpenTofu-%3E%3D1.6-purple.svg)](https://opentofu.org)
+[![Terragrunt](https://img.shields.io/badge/Terragrunt-1.0%20Stacks-orange.svg)](https://terragrunt.gruntwork.io)
 
-Designed to be consumed by external deployment repos (like [devopsdays-fsa](https://github.com/throdriguesdev/devopsdays-fsa)) via versioned git references, and also usable standalone as a practice lab.
+Reusable AWS infrastructure modules built with **OpenTofu** and **Terragrunt 1.0 Stacks**. Each module is independently consumable via versioned git reference, and the `live/` directory provides a full working deployment across layered stacks.
 
-## What's in the catalog
+---
 
-| Module | Description |
-|--------|-------------|
-| `vpc` | VPC, public/private subnets, NAT gateway |
-| `kms` | KMS key with rotation + cluster encryption policy |
-| `budget` | AWS Budget with SNS alert |
-| `route53-zone` | Public hosted zone |
-| `rds-postgres` | RDS PostgreSQL with subnet group |
-| `eks` | EKS cluster, OIDC/IRSA, managed Spot node group, EBS CSI |
-| `eks-addons` | LBC, cert-manager (Route53 DNS01), external-dns, external-secrets — all IRSA-wired |
-| `argocd` | ArgoCD via Helm, ALB ingress + TLS via cert-manager |
+## Modules
+
+| Module | Path | Description |
+|--------|------|-------------|
+| `vpc` | `catalog/modules/vpc` | VPC with public / private / database subnets, NAT gateway, route tables |
+| `kms` | `catalog/modules/kms` | Customer-managed KMS key with rotation and configurable key policy |
+| `budget` | `catalog/modules/budget` | AWS Cost Budget with multi-threshold SNS alerts |
+| `route53-zone` | `catalog/modules/route53-zone` | Public (or private) Route 53 hosted zone |
+| `rds-postgres` | `catalog/modules/rds-postgres` | RDS PostgreSQL — subnet group, parameter group, security group, managed password |
+| `eks` | `catalog/modules/eks` | EKS cluster with OIDC provider, managed node group, EBS CSI, KMS secrets encryption |
+| `eks-addons` | `catalog/modules/eks-addons` | AWS Load Balancer Controller, cert-manager, external-dns, external-secrets — all IRSA-wired |
+| `argocd` | `catalog/modules/argocd` | ArgoCD via Helm with ALB ingress and cert-manager TLS |
+
+---
 
 ## Consuming modules from another repo
 
-Reference any module by git URL + tag:
+Any module can be sourced directly via git tag:
 
 ```hcl
 terraform {
-  source = "git::https://github.com/throdriguesdev/terraform-aws.git//catalog/modules/eks?ref=v1.0.0"
+  source = "git::https://github.com/throdriguesdev/terraform-aws.git//catalog/modules/eks?ref=v1.1.0"
 }
 ```
 
-See [devopsdays-fsa](https://github.com/throdriguesdev/devopsdays-fsa) for a full working example that deploys an observability-ready EKS cluster using this catalog.
+> [!NOTE]
+> Always pin to a release tag (`?ref=vX.Y.Z`) rather than `main` to avoid unintentional changes.
 
-## Using as a standalone lab
+Each module exposes its interface through `variables.tf` and `outputs.tf`. Modules have no side-effect data sources — all inputs (VPC ID, subnet IDs, KMS key ARN, etc.) are passed explicitly by the caller, making them safe to compose in any account or environment.
+
+---
+
+## Deploying the full stack
 
 ### Prerequisites
 
-- [OpenTofu](https://opentofu.org/docs/intro/install/) >= 1.6
-- [Terragrunt](https://terragrunt.gruntwork.io/docs/getting-started/install/) >= 1.0
-- AWS CLI v2 + `kubectl` + `helm`
-- An AWS account with credentials configured; optionally [direnv](https://direnv.net/)
+| Tool | Version |
+|------|---------|
+| [OpenTofu](https://opentofu.org/docs/intro/install/) | >= 1.6 |
+| [Terragrunt](https://terragrunt.gruntwork.io/docs/getting-started/install/) | >= 1.0 |
+| AWS CLI | v2 |
+| kubectl + helm | any recent |
 
-### Quick start
+An AWS account with credentials configured. [direnv](https://direnv.net/) is recommended for profile isolation.
+
+### Setup
 
 ```bash
-cp .envrc.example .envrc      # set TF_VAR_aws_profile, TF_VAR_account_id
-direnv allow                  # or: source .envrc
-
-./scripts/lab-up.sh           # foundation → networking → dns → compute
-./scripts/lab-down.sh -y      # tear down cost-bearing pieces (keeps dns + foundation)
+cp .envrc.example .envrc   # set TF_VAR_aws_profile and TF_VAR_account_id
+direnv allow               # or: source .envrc
 ```
 
-### Stack structure
+### Lifecycle scripts
+
+```bash
+./scripts/lab-up.sh       # apply all stacks in order: foundation → networking → dns → compute → data
+./scripts/lab-down.sh -y  # destroy cost-bearing stacks, keep dns + foundation
+```
+
+> [!TIP]
+> `lab-down.sh` drops to idle cost (~$1.50/mo) without losing the Route 53 zone delegation. Useful for spinning the cluster up and down between sessions.
+
+### Stack layout
 
 ```
 live/dev/us-east-1/
-  foundation/     # KMS + Budget          (~$1/mo idle)
-  networking/     # VPC + NAT gateway
-  dns/            # Route53 zone          (~$0.50/mo idle)
-  compute/        # EKS + Spot nodes + addons + ArgoCD
-  data/           # RDS Postgres
+├── foundation/    # KMS key + Budget alerts         (~$1/mo idle)
+├── networking/    # VPC, subnets, NAT gateway
+├── dns/           # Route 53 public zone            (~$0.50/mo idle)
+├── compute/       # EKS cluster + addons + ArgoCD
+└── data/          # RDS PostgreSQL
 ```
 
+Each directory is a **Terragrunt 1.0 Stack** — a single file (`terragrunt.stack.hcl`) declares all units and their dependency order.
+
 ```bash
-# within any stack directory:
+# Run from any stack directory
 terragrunt stack run plan
 terragrunt stack run apply
 terragrunt stack run destroy
 ```
 
-## What's built
+---
+
+## What's included
 
 | Area | Components | Status |
-|------|-----------|--------|
-| Foundation | KMS, Budget + SNS | Done |
-| Networking | VPC, subnets, NAT gateway | Done |
-| DNS / TLS | Route53 zone, cert-manager (DNS01), external-dns | Done |
-| Compute | EKS 1.32, managed Spot nodes, EBS CSI, OIDC/IRSA | Done |
-| Ingress | AWS Load Balancer Controller (ALB) | Done |
-| Secrets | external-secrets (SSM / Secrets Manager) | Done |
-| GitOps | ArgoCD (Helm, ALB ingress, TLS) | Done |
-| Data | RDS Postgres | Done |
-| Observability | Grafana + LGTM stack (via devopsdays-fsa GitOps) | External |
+|------|------------|--------|
+| Foundation | KMS CMK, AWS Budget + SNS | ✅ |
+| Networking | VPC, 3-tier subnets, NAT gateway | ✅ |
+| DNS / TLS | Route 53 zone, cert-manager (DNS01 solver), external-dns | ✅ |
+| Compute | EKS 1.32, managed Spot node group, EBS CSI driver, OIDC / IRSA | ✅ |
+| Ingress | AWS Load Balancer Controller (ALB) | ✅ |
+| Secrets | external-secrets (SSM Parameter Store + Secrets Manager) | ✅ |
+| GitOps | ArgoCD (Helm, ALB ingress, cert-manager TLS) | ✅ |
+| Data | RDS PostgreSQL (gp3, managed password, Performance Insights) | ✅ |
+
+---
 
 ## Cost
 
-- **Idle** (dns + foundation only): **~$1.50/mo**
-- **Full lab** (EKS control plane + NAT + Spot nodes + ALB): **~$0.20/hr**
+> [!WARNING]
+> The full stack is **not free**. Tear down with `lab-down.sh` after each session to avoid unexpected charges.
 
-`./scripts/lab-down.sh` drops to idle cost without losing the Route53 zone delegation.
+| State | Approximate cost |
+|-------|-----------------|
+| Idle (dns + foundation only) | ~$1.50 / mo |
+| Full stack (EKS + NAT + Spot nodes + ALB) | ~$0.20 / hr |
+
+The biggest cost drivers are the EKS control plane ($0.10/hr), NAT Gateway ($0.045/hr + data transfer), and ALB ($0.025/hr base). Spot nodes (t3.small) are ~$0.008/hr each.
+
+---
+
+## License
+
+[Apache 2.0](LICENSE) © Thiago Rodrigues
